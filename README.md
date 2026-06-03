@@ -1,8 +1,11 @@
 # mcp-server-azure-postgres
 
 [![npm version](https://img.shields.io/npm/v/mcp-server-azure-postgres.svg)](https://npm.im/mcp-server-azure-postgres)
+[![npm downloads](https://img.shields.io/npm/dw/mcp-server-azure-postgres)](https://npm.im/mcp-server-azure-postgres)
+[![Build & Publish](https://github.com/Ryzeon/mcp-server-azure-postgres/actions/workflows/publish.yml/badge.svg)](https://github.com/Ryzeon/mcp-server-azure-postgres/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-![Node.js version](https://img.shields.io/badge/node-%3E%3D20-brightgreen)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue.svg)](https://www.typescriptlang.org/)
 
 A Model Context Protocol (MCP) server for Azure Database for PostgreSQL with **automatic Azure AD token refresh**. No token expiry, no manual password updates.
 

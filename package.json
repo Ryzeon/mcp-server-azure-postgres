@@ -21,6 +21,10 @@
     "authentication"
   ],
   "author": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ryzeon/mcp-server-azure-postgres"
+  },
   "license": "MIT",
   "dependencies": {
     "@azure/identity": "^4.13.1",

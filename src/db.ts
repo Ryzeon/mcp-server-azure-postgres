@@ -1,5 +1,5 @@
 import { DefaultAzureCredential } from "@azure/identity";
-import { Pool, PoolClient, QueryResult } from "pg";
+import { Pool, PoolClient } from "pg";
 
 const credential = new DefaultAzureCredential();
 const SCOPE = "https://ossrdbms-aad.database.windows.net/.default";
@@ -16,10 +16,7 @@ export const pool = new Pool({
   },
 });
 
-export async function query<T = any>(
-  text: string,
-  values?: any[]
-): Promise<QueryResult<T>> {
+export async function query(text: string, values?: any[]) {
   return pool.query(text, values);
 }
 

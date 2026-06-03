@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
-  Server,
-  StdioServerTransport,
   Tool,
-  TextContent,
-} from "@modelcontextprotocol/sdk/server/index.js";
-import { CallToolRequest, ListToolsRequest } from "@modelcontextprotocol/sdk/shared/messages.js";
+  ListToolsRequestSchema,
+  CallToolRequestSchema,
+} from "@modelcontextprotocol/sdk/types.js";
 import { query, close } from "./db.js";
 
 const server = new Server({
@@ -82,11 +82,11 @@ const tools: Tool[] = [
   },
 ];
 
-server.setRequestHandler(ListToolsRequest, async () => {
+server.setRequestHandler(ListToolsRequestSchema, async () => {
   return { tools };
 });
 
-server.setRequestHandler(CallToolRequest, async (request) => {
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
   try {

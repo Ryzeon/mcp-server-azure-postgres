@@ -23,18 +23,31 @@ A Model Context Protocol (MCP) server for Azure Database for PostgreSQL with **a
 
 ### Installation
 
-```bash
-# Using GitHub (development)
-npx -y github:ryzeon/mcp-server-azure-postgres
+#### Option 1: Interactive Installer (Recommended)
 
-# Using npm (once published)
-npx mcp-server-azure-postgres
+**Linux / macOS:**
+```bash
+curl -fsSL https://raw.githubusercontent.com/Ryzeon/mcp-server-azure-postgres/main/install.sh | bash
 ```
 
-### Configure in Claude Code
+**Windows (PowerShell):**
+```powershell
+iex (irm https://raw.githubusercontent.com/Ryzeon/mcp-server-azure-postgres/main/install.ps1)
+```
 
-Add to `.claude/settings.json`:
+The installer will:
+- ✓ Check prerequisites (Node.js, npm, Azure CLI)
+- ✓ Ask for your PostgreSQL connection details
+- ✓ Ask for your Azure auth method (`az login` or Service Principal)
+- ✓ Configure Claude Code automatically
+- ✓ Show you next steps
 
+#### Option 2: Manual Configuration
+
+1. Open or create `~/.claude/settings.json`
+2. Add this configuration:
+
+**With `az login`:**
 ```json
 {
   "mcpServers": {
@@ -52,8 +65,7 @@ Add to `.claude/settings.json`:
 }
 ```
 
-If using **Service Principal** (CI/CD or another machine without `az login`):
-
+**With Service Principal (CI/CD, another machine):**
 ```json
 {
   "mcpServers": {
@@ -61,19 +73,31 @@ If using **Service Principal** (CI/CD or another machine without `az login`):
       "command": "npx",
       "args": ["-y", "github:ryzeon/mcp-server-azure-postgres"],
       "env": {
-        "PGHOST": "...",
-        "PGDATABASE": "...",
-        "PGUSER": "...",
-        "AZURE_TENANT_ID": "...",
-        "AZURE_CLIENT_ID": "...",
-        "AZURE_CLIENT_SECRET": "..."
+        "PGHOST": "myserver.postgres.database.azure.com",
+        "PGDATABASE": "mydb",
+        "PGUSER": "myapp",
+        "PGPORT": "5432",
+        "AZURE_TENANT_ID": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+        "AZURE_CLIENT_ID": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+        "AZURE_CLIENT_SECRET": "your-secret-here"
       }
     }
   }
 }
 ```
 
-Then restart Claude Code or reload the MCP with `/mcp`.
+3. Restart Claude Code or reload the MCP with `/mcp`
+
+## Upgrading
+
+To upgrade to the latest version:
+
+```bash
+# Just re-run the installer
+bash <(curl -fsSL https://raw.githubusercontent.com/Ryzeon/mcp-server-azure-postgres/main/install.sh)
+
+# Or manually: npx will automatically fetch the latest
+```
 
 ## Configuration
 

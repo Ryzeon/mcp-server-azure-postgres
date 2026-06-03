@@ -7,7 +7,7 @@
 [![Node.js](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue.svg)](https://www.typescriptlang.org/)
 
-A Model Context Protocol (MCP) server for Azure Database for PostgreSQL with **automatic Azure AD token refresh**. No token expiry, no manual password updates.
+A Model Context Protocol (MCP) server for Azure Database for PostgreSQL with **automatic Azure AD token refresh**. Works with **Claude Code**, **Cursor**, **Cline**, **Continue**, **Antigratuity**, and other MCP clients. No token expiry, no manual password updates.
 
 ## Why This?
 
@@ -48,11 +48,14 @@ The helper will:
 
 Then paste the generated JSON into your tool's settings file and restart.
 
-**Works with:**
-- Claude Code (`~/.claude/settings.json`)
-- ChatGPT (via MCP marketplace)
-- Cline, Continue, and other MCP clients
-- Custom applications
+**Works with any MCP client:**
+- **Claude Code** (`~/.claude/settings.json`)
+- **Cursor** (`~/.cursor/settings.json`)
+- **Cline** (`~/.cline/settings.json`)
+- **Continue** (`~/.continue/config.json`)
+- **Antigratuity**
+- **ChatGPT** (via MCP marketplace)
+- Custom MCP applications
 
 For detailed setup and troubleshooting, see [INSTALL.md](INSTALL.md).
 

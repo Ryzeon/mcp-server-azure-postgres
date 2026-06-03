@@ -1,6 +1,6 @@
 {
   "name": "mcp-server-azure-postgres",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "MCP server for Azure Database for PostgreSQL with automatic Azure AD token refresh",
   "type": "module",
   "main": "dist/index.js",

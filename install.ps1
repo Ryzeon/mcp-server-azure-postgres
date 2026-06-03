@@ -121,36 +121,50 @@ function Main {
         Write-Success "Backed up existing settings"
     }
 
-    # Build settings object
-    $Settings = @{
-        theme      = "auto"
-        mcpServers = @{
-            "pg-azure" = @{
-                env = @{
-                    PGHOST     = $PGHOST
-                    PGDATABASE = $PGDATABASE
-                    PGUSER     = $PGUSER
-                    PGPORT     = $PGPORT
-                }
-            }
-        }
-    }
-
-    # Add command and args
-    if ($InstallMethod -eq "1") {
-        $Settings.mcpServers["pg-azure"]["command"] = "npx"
-        $Settings.mcpServers["pg-azure"]["args"] = @("-y", "github:Ryzeon/mcp-server-azure-postgres")
+    # Load existing settings or create new
+    if (Test-Path $SettingsFile) {
+        $Settings = Get-Content $SettingsFile -Raw | ConvertFrom-Json
     }
     else {
-        $Settings.mcpServers["pg-azure"]["command"] = "mcp-server-azure-postgres"
+        $Settings = @{ theme = "auto" }
+    }
+
+    # Ensure mcpServers exists
+    if (-not $Settings.mcpServers) {
+        $Settings | Add-Member -Name "mcpServers" -Value @{} -MemberType NoteProperty
+    }
+
+    # Build env object
+    $Env = @{
+        PGHOST     = $PGHOST
+        PGDATABASE = $PGDATABASE
+        PGUSER     = $PGUSER
+        PGPORT     = $PGPORT
     }
 
     # Add Azure credentials if Service Principal
     if ($AuthMethod -eq "2") {
-        $Settings.mcpServers["pg-azure"].env["AZURE_TENANT_ID"] = $AZURE_TENANT_ID
-        $Settings.mcpServers["pg-azure"].env["AZURE_CLIENT_ID"] = $AZURE_CLIENT_ID
-        $Settings.mcpServers["pg-azure"].env["AZURE_CLIENT_SECRET"] = $AZURE_CLIENT_SECRET
+        $Env["AZURE_TENANT_ID"] = $AZURE_TENANT_ID
+        $Env["AZURE_CLIENT_ID"] = $AZURE_CLIENT_ID
+        $Env["AZURE_CLIENT_SECRET"] = $AZURE_CLIENT_SECRET
     }
+
+    # Build MCP config
+    $McpConfig = @{
+        env = $Env
+    }
+
+    # Add command and args
+    if ($InstallMethod -eq "1") {
+        $McpConfig["command"] = "npx"
+        $McpConfig["args"] = @("-y", "github:Ryzeon/mcp-server-azure-postgres")
+    }
+    else {
+        $McpConfig["command"] = "mcp-server-azure-postgres"
+    }
+
+    # Add/update pg-azure MCP
+    $Settings.mcpServers | Add-Member -Name "pg-azure" -Value $McpConfig -MemberType NoteProperty -Force
 
     # Write settings
     $Settings | ConvertTo-Json -Depth 10 | Out-File -FilePath $SettingsFile -Encoding UTF8

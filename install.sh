@@ -127,52 +127,60 @@ main() {
         ARGS="null"
     fi
 
-    # Build env object
-    ENV_JSON="{
-        \"PGHOST\": \"$PGHOST\",
-        \"PGDATABASE\": \"$PGDATABASE\",
-        \"PGUSER\": \"$PGUSER\",
-        \"PGPORT\": \"$PGPORT\""
+    # Build Python script to merge JSON
+    python3 << PYTHON_EOF
+import json
+import os
 
-    if [ -n "$AZURE_TENANT_ID" ]; then
-        ENV_JSON="$ENV_JSON,
-        \"AZURE_TENANT_ID\": \"$AZURE_TENANT_ID\",
-        \"AZURE_CLIENT_ID\": \"$AZURE_CLIENT_ID\",
-        \"AZURE_CLIENT_SECRET\": \"$AZURE_CLIENT_SECRET\""
-    fi
+settings_file = "$SETTINGS_FILE"
+command = "$COMMAND"
+args = $ARGS
 
-    ENV_JSON="$ENV_JSON
-    }"
-
-    # Create settings JSON
-    if [ "$ARGS" = "null" ]; then
-        cat > "$SETTINGS_FILE" <<EOF
-{
-  "theme": "auto",
-  "mcpServers": {
-    "pg-azure": {
-      "command": "$COMMAND",
-      "env": $ENV_JSON
-    }
-  }
+# Build env object
+env = {
+    "PGHOST": "$PGHOST",
+    "PGDATABASE": "$PGDATABASE",
+    "PGUSER": "$PGUSER",
+    "PGPORT": "$PGPORT"
 }
-EOF
-    else
-        cat > "$SETTINGS_FILE" <<EOF
-{
-  "theme": "auto",
-  "mcpServers": {
-    "pg-azure": {
-      "command": "$COMMAND",
-      "args": $ARGS,
-      "env": $ENV_JSON
-    }
-  }
-}
-EOF
-    fi
 
-    print_success "Configured at $SETTINGS_FILE"
+# Add Azure credentials if provided
+if "$AZURE_TENANT_ID":
+    env["AZURE_TENANT_ID"] = "$AZURE_TENANT_ID"
+    env["AZURE_CLIENT_ID"] = "$AZURE_CLIENT_ID"
+    env["AZURE_CLIENT_SECRET"] = "$AZURE_CLIENT_SECRET"
+
+# Build MCP config
+mcp_config = {
+    "command": command,
+    "env": env
+}
+
+if args is not None:
+    mcp_config["args"] = args
+
+# Load existing settings or create new
+if os.path.exists(settings_file):
+    with open(settings_file, 'r') as f:
+        settings = json.load(f)
+else:
+    settings = {"theme": "auto"}
+
+# Ensure mcpServers exists
+if "mcpServers" not in settings:
+    settings["mcpServers"] = {}
+
+# Add/update pg-azure
+settings["mcpServers"]["pg-azure"] = mcp_config
+
+# Write back
+with open(settings_file, 'w') as f:
+    json.dump(settings, f, indent=2)
+
+print("✓ Updated at " + settings_file)
+PYTHON_EOF
+
+    print_success "Settings configured"
 
     echo ""
     echo -e "${GREEN}╔════════════════════════════════════════════════╗${NC}"

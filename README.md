@@ -59,6 +59,33 @@ Then paste the generated JSON into your tool's settings file and restart.
 
 For detailed setup and troubleshooting, see [INSTALL.md](INSTALL.md).
 
+### Add to Claude Code
+
+Use the `claude mcp add` command to register the server directly from your terminal:
+
+```bash
+claude mcp add mcp-server-azure-postgres npx mcp-server-azure-postgres \
+  -e PGHOST=myserver.postgres.database.azure.com \
+  -e PGDATABASE=mydb \
+  -e PGUSER=myapp \
+  -e PGPORT=5432
+```
+
+For Service Principal authentication, add the Azure env vars as well:
+
+```bash
+claude mcp add mcp-server-azure-postgres npx mcp-server-azure-postgres \
+  -e PGHOST=myserver.postgres.database.azure.com \
+  -e PGDATABASE=mydb \
+  -e PGUSER=myapp \
+  -e PGPORT=5432 \
+  -e AZURE_TENANT_ID=<tenant-id> \
+  -e AZURE_CLIENT_ID=<client-id> \
+  -e AZURE_CLIENT_SECRET=<client-secret>
+```
+
+This writes the configuration to `~/.claude/settings.json` automatically. Restart Claude Code after running the command.
+
 ## Configuration
 
 ### Required Environment Variables

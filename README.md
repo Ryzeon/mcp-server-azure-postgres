@@ -21,9 +21,7 @@ A Model Context Protocol (MCP) server for Azure Database for PostgreSQL with **a
 
 ## Quick Start
 
-### Installation
-
-#### Option 1: Interactive Installer (Recommended)
+### Installation (Interactive)
 
 **Linux / macOS:**
 ```bash
@@ -35,69 +33,12 @@ curl -fsSL https://raw.githubusercontent.com/Ryzeon/mcp-server-azure-postgres/ma
 iex (irm https://raw.githubusercontent.com/Ryzeon/mcp-server-azure-postgres/main/install.ps1)
 ```
 
-The installer will:
-- ✓ Check prerequisites (Node.js, npm, Azure CLI)
-- ✓ Ask for your PostgreSQL connection details
-- ✓ Ask for your Azure auth method (`az login` or Service Principal)
-- ✓ Configure Claude Code automatically
-- ✓ Show you next steps
+The installer will ask you for:
+- PostgreSQL connection details (host, database, user, port)
+- Azure auth method (`az login` or Service Principal credentials)
+- Then configure Claude Code automatically ✓
 
-#### Option 2: Manual Configuration
-
-1. Open or create `~/.claude/settings.json`
-2. Add this configuration:
-
-**With `az login`:**
-```json
-{
-  "mcpServers": {
-    "pg-azure": {
-      "command": "npx",
-      "args": ["-y", "github:ryzeon/mcp-server-azure-postgres"],
-      "env": {
-        "PGHOST": "myserver.postgres.database.azure.com",
-        "PGDATABASE": "mydb",
-        "PGUSER": "myapp",
-        "PGPORT": "5432"
-      }
-    }
-  }
-}
-```
-
-**With Service Principal (CI/CD, another machine):**
-```json
-{
-  "mcpServers": {
-    "pg-azure": {
-      "command": "npx",
-      "args": ["-y", "github:ryzeon/mcp-server-azure-postgres"],
-      "env": {
-        "PGHOST": "myserver.postgres.database.azure.com",
-        "PGDATABASE": "mydb",
-        "PGUSER": "myapp",
-        "PGPORT": "5432",
-        "AZURE_TENANT_ID": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-        "AZURE_CLIENT_ID": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-        "AZURE_CLIENT_SECRET": "your-secret-here"
-      }
-    }
-  }
-}
-```
-
-3. Restart Claude Code or reload the MCP with `/mcp`
-
-## Upgrading
-
-To upgrade to the latest version:
-
-```bash
-# Just re-run the installer
-bash <(curl -fsSL https://raw.githubusercontent.com/Ryzeon/mcp-server-azure-postgres/main/install.sh)
-
-# Or manually: npx will automatically fetch the latest
-```
+For detailed installation instructions, prerequisites, and troubleshooting, see [INSTALL.md](INSTALL.md).
 
 ## Configuration
 
@@ -264,22 +205,18 @@ This is identical to how Azure SDKs and microservices handle authentication — 
 
 ## Troubleshooting
 
-### "Error: credential not found"
+For detailed troubleshooting guides, installation issues, and common problems, see [INSTALL.md](INSTALL.md#troubleshooting).
 
-- **Local**: Run `az login` first
-- **Azure VM**: Enable Managed Identity in Azure Portal
-- **CI/CD**: Set `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`
+### Common Issues
 
-### "Connection timeout"
+| Issue | Solution |
+|-------|----------|
+| "Error: credential not found" | Run `az login` first, or set Service Principal env vars |
+| "Connection timeout" | Verify `PGHOST`, firewall rules, Azure AD auth enabled |
+| "Token refresh fails" | Check that your Azure identity has database login rights |
+| "PowerShell execution disabled" | Run `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser` |
 
-- Verify `PGHOST`, `PGDATABASE`, `PGUSER` are correct
-- Check that the PostgreSQL server allows connections from your IP
-- Verify Azure AD authentication is enabled on the PostgreSQL server
-
-### "Token refresh fails"
-
-- Ensure the Azure identity (user, service principal, or managed identity) has database login rights in PostgreSQL
-- PostgreSQL must have Azure AD authentication enabled
+For more, see [INSTALL.md → Troubleshooting](INSTALL.md#troubleshooting).
 
 ## Contributing
 

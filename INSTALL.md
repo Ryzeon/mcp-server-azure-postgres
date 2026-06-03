@@ -58,7 +58,7 @@ After running the setup helper, paste the generated JSON into your tool's config
   "mcpServers": {
     "pg-azure": {
       "command": "npx",
-      "args": ["-y", "github:Ryzeon/mcp-server-azure-postgres"],
+      "args": ["-y", "mcp-server-azure-postgres"],
       "env": {
         "PGHOST": "...",
         "PGDATABASE": "...",
@@ -123,7 +123,7 @@ If the installer doesn't work for you, edit `~/.claude/settings.json` directly:
   "mcpServers": {
     "pg-azure": {
       "command": "npx",
-      "args": ["-y", "github:Ryzeon/mcp-server-azure-postgres"],
+      "args": ["-y", "mcp-server-azure-postgres"],
       "env": {
         "PGHOST": "myserver.postgres.database.azure.com",
         "PGDATABASE": "mydb",
@@ -159,7 +159,7 @@ Or with `npm install -g`:
   "mcpServers": {
     "pg-azure": {
       "command": "npx",
-      "args": ["-y", "github:Ryzeon/mcp-server-azure-postgres"],
+      "args": ["-y", "mcp-server-azure-postgres"],
       "env": {
         "PGHOST": "myserver.postgres.database.azure.com",
         "PGDATABASE": "mydb",

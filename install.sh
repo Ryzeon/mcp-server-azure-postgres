@@ -121,7 +121,7 @@ main() {
     # Determine command based on method
     if [ "$INSTALL_METHOD" = "1" ]; then
         COMMAND="npx"
-        ARGS='["-y", "github:Ryzeon/mcp-server-azure-postgres"]'
+        ARGS='["-y", "mcp-server-azure-postgres"]'
     else
         COMMAND="mcp-server-azure-postgres"
         ARGS="null"

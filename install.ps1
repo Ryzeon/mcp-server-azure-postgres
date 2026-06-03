@@ -138,7 +138,7 @@ function Main {
 
     if ($InstallMethod -eq "1") {
         Write-Host '  "command": "npx",'
-        Write-Host '  "args": ["-y", "github:Ryzeon/mcp-server-azure-postgres"],'
+        Write-Host '  "args": ["-y", "mcp-server-azure-postgres"],'
     }
     else {
         Write-Host '  "command": "mcp-server-azure-postgres",'

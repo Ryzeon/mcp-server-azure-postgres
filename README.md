@@ -19,9 +19,9 @@ A Model Context Protocol (MCP) server for Azure Database for PostgreSQL with **a
 - ✅ **Standard MCP interface** — 4 tools: `query`, `list_schemas`, `list_tables`, `describe_table`
 - ✅ **TypeScript + source maps** — Easy to debug and extend
 
-## Quick Start
+## Installation
 
-### Installation (Interactive)
+### Quick Start (5 minutes)
 
 **Linux / macOS:**
 ```bash
@@ -33,12 +33,31 @@ curl -fsSL https://raw.githubusercontent.com/Ryzeon/mcp-server-azure-postgres/ma
 iex (irm https://raw.githubusercontent.com/Ryzeon/mcp-server-azure-postgres/main/install.ps1)
 ```
 
-The installer will ask you for:
-- PostgreSQL connection details (host, database, user, port)
-- Azure auth method (`az login` or Service Principal credentials)
-- Then configure Claude Code automatically ✓
+The installer will:
+- ✓ Check your Node.js and npm setup
+- ✓ Ask for PostgreSQL connection details
+- ✓ Ask for Azure auth method (`az login` or Service Principal)
+- ✓ Show you the `claude mcp add` command to register the MCP
 
-For detailed installation instructions, prerequisites, and troubleshooting, see [INSTALL.md](INSTALL.md).
+### Manual Setup
+
+```bash
+# Set environment variables
+export PGHOST="myserver.postgres.database.azure.com"
+export PGDATABASE="mydb"
+export PGUSER="myapp"
+export PGPORT="5432"
+
+# Then one of:
+# Option A: npx (no installation)
+claude mcp add pg-azure --transport stdio -- npx -y github:Ryzeon/mcp-server-azure-postgres
+
+# Option B: npm install -g (faster execution)
+npm install -g mcp-server-azure-postgres
+claude mcp add pg-azure --transport stdio -- mcp-server-azure-postgres
+```
+
+For detailed setup and troubleshooting, see [INSTALL.md](INSTALL.md).
 
 ## Configuration
 

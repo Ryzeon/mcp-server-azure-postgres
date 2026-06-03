@@ -103,54 +103,80 @@ function Main {
     $InstallMethodInput = Read-Host "  Select [1-2] (default 1)"
     $InstallMethod = if ([string]::IsNullOrWhiteSpace($InstallMethodInput)) { "1" } else { $InstallMethodInput }
 
-    # Show environment variables
+    # Create/update .claude/settings.json
     Write-Host ""
-    Write-Host "Set these environment variables:" -ForegroundColor Cyan
-    Write-Host ""
-    Write-Host "`$env:PGHOST = '$PGHOST'"
-    Write-Host "`$env:PGDATABASE = '$PGDATABASE'"
-    Write-Host "`$env:PGUSER = '$PGUSER'"
-    Write-Host "`$env:PGPORT = '$PGPORT'"
+    Write-Step "Configuring Claude Code..."
 
-    if (-not [string]::IsNullOrWhiteSpace($AZURE_TENANT_ID)) {
-        Write-Host "`$env:AZURE_TENANT_ID = '$AZURE_TENANT_ID'"
-        Write-Host "`$env:AZURE_CLIENT_ID = '$AZURE_CLIENT_ID'"
-        Write-Host "`$env:AZURE_CLIENT_SECRET = '***'"
+    $ClaudeDir = "$env:USERPROFILE\.claude"
+    if (-not (Test-Path $ClaudeDir)) {
+        New-Item -ItemType Directory -Path $ClaudeDir -Force | Out-Null
     }
 
-    Write-Host ""
-    Write-Success "Configuration ready"
-    Write-Host ""
+    $SettingsFile = "$ClaudeDir\settings.json"
 
-    # Show next steps
-    Write-Host "Next, install the MCP server:" -ForegroundColor Cyan
-    Write-Host ""
+    # Backup if exists
+    if (Test-Path $SettingsFile) {
+        $BackupFile = "$SettingsFile.backup.$(Get-Date -Format 'yyyyMMddHHmmss')"
+        Copy-Item $SettingsFile -Destination $BackupFile
+        Write-Success "Backed up existing settings"
+    }
 
+    # Build settings object
+    $Settings = @{
+        theme      = "auto"
+        mcpServers = @{
+            "pg-azure" = @{
+                env = @{
+                    PGHOST     = $PGHOST
+                    PGDATABASE = $PGDATABASE
+                    PGUSER     = $PGUSER
+                    PGPORT     = $PGPORT
+                }
+            }
+        }
+    }
+
+    # Add command and args
     if ($InstallMethod -eq "1") {
-        Write-Host "  # No installation needed - use with claude mcp add:"
-        Write-Host ""
-        Write-Info "Register in Claude Code:"
-        Write-Host ""
-        Write-Host "  claude mcp add pg-azure --transport stdio -- npx -y github:Ryzeon/mcp-server-azure-postgres"
-        Write-Host ""
+        $Settings.mcpServers["pg-azure"]["command"] = "npx"
+        $Settings.mcpServers["pg-azure"]["args"] = @("-y", "github:Ryzeon/mcp-server-azure-postgres")
     }
     else {
+        $Settings.mcpServers["pg-azure"]["command"] = "mcp-server-azure-postgres"
+    }
+
+    # Add Azure credentials if Service Principal
+    if ($AuthMethod -eq "2") {
+        $Settings.mcpServers["pg-azure"].env["AZURE_TENANT_ID"] = $AZURE_TENANT_ID
+        $Settings.mcpServers["pg-azure"].env["AZURE_CLIENT_ID"] = $AZURE_CLIENT_ID
+        $Settings.mcpServers["pg-azure"].env["AZURE_CLIENT_SECRET"] = $AZURE_CLIENT_SECRET
+    }
+
+    # Write settings
+    $Settings | ConvertTo-Json -Depth 10 | Out-File -FilePath $SettingsFile -Encoding UTF8
+    Write-Success "Configured at $SettingsFile"
+
+    Write-Host ""
+    Write-Host "╔════════════════════════════════════════════════╗" -ForegroundColor Green
+    Write-Host "║ Setup Complete! ✓                            ║" -ForegroundColor Green
+    Write-Host "╚════════════════════════════════════════════════╝" -ForegroundColor Green
+    Write-Host ""
+    Write-Host "Next steps:" -ForegroundColor Cyan
+    Write-Host "  1. Restart Claude Code or reload MCP with /mcp"
+    Write-Host "  2. Test with: /mcp"
+    Write-Host ""
+
+    if ($InstallMethod -eq "2") {
+        Write-Host "First time setup:"
         Write-Host "  npm install -g mcp-server-azure-postgres"
-        Write-Host ""
-        Write-Info "Then register in Claude Code:"
-        Write-Host ""
-        Write-Host "  claude mcp add pg-azure --transport stdio -- mcp-server-azure-postgres"
         Write-Host ""
     }
 
     if ($AuthMethod -eq "1") {
-        Write-Host ""
         Write-Info "Make sure you've run 'az login' before using the MCP"
+        Write-Host ""
     }
 
-    Write-Host ""
-    Write-Success "Setup complete!"
-    Write-Host ""
     Write-Host "For more info: https://github.com/Ryzeon/mcp-server-azure-postgres" -ForegroundColor Cyan
 }
 

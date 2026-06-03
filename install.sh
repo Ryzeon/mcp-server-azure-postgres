@@ -105,53 +105,96 @@ main() {
     read -p "  Select [1-2] (default 1): " INSTALL_METHOD
     INSTALL_METHOD=${INSTALL_METHOD:-1}
 
-    # Generate environment variables export
+    # Create/update .claude/settings.json
     echo ""
-    echo "Set these environment variables:"
-    echo ""
-    echo "export PGHOST='$PGHOST'"
-    echo "export PGDATABASE='$PGDATABASE'"
-    echo "export PGUSER='$PGUSER'"
-    echo "export PGPORT='$PGPORT'"
+    print_step "Configuring Claude Code..."
 
-    if [ -n "$AZURE_TENANT_ID" ]; then
-        echo "export AZURE_TENANT_ID='$AZURE_TENANT_ID'"
-        echo "export AZURE_CLIENT_ID='$AZURE_CLIENT_ID'"
-        echo "export AZURE_CLIENT_SECRET='$AZURE_CLIENT_SECRET'"
+    mkdir -p "$HOME/.claude"
+    SETTINGS_FILE="$HOME/.claude/settings.json"
+
+    # Backup if exists
+    if [ -f "$SETTINGS_FILE" ]; then
+        cp "$SETTINGS_FILE" "$SETTINGS_FILE.backup.$(date +%s)"
+        print_success "Backed up existing settings"
     fi
 
-    echo ""
-    print_success "Configuration ready"
-    echo ""
-
-    # Show installation method
-    echo "Next, install the MCP server:"
-    echo ""
-
+    # Determine command based on method
     if [ "$INSTALL_METHOD" = "1" ]; then
-        echo "  # No installation needed - use with claude mcp add:"
-        echo ""
-        print_info "Register in Claude Code:"
-        echo ""
-        echo "  claude mcp add pg-azure --transport stdio -- npx -y github:Ryzeon/mcp-server-azure-postgres"
-        echo ""
+        COMMAND="npx"
+        ARGS='["-y", "github:Ryzeon/mcp-server-azure-postgres"]'
     else
+        COMMAND="mcp-server-azure-postgres"
+        ARGS="null"
+    fi
+
+    # Build env object
+    ENV_JSON="{
+        \"PGHOST\": \"$PGHOST\",
+        \"PGDATABASE\": \"$PGDATABASE\",
+        \"PGUSER\": \"$PGUSER\",
+        \"PGPORT\": \"$PGPORT\""
+
+    if [ -n "$AZURE_TENANT_ID" ]; then
+        ENV_JSON="$ENV_JSON,
+        \"AZURE_TENANT_ID\": \"$AZURE_TENANT_ID\",
+        \"AZURE_CLIENT_ID\": \"$AZURE_CLIENT_ID\",
+        \"AZURE_CLIENT_SECRET\": \"$AZURE_CLIENT_SECRET\""
+    fi
+
+    ENV_JSON="$ENV_JSON
+    }"
+
+    # Create settings JSON
+    if [ "$ARGS" = "null" ]; then
+        cat > "$SETTINGS_FILE" <<EOF
+{
+  "theme": "auto",
+  "mcpServers": {
+    "pg-azure": {
+      "command": "$COMMAND",
+      "env": $ENV_JSON
+    }
+  }
+}
+EOF
+    else
+        cat > "$SETTINGS_FILE" <<EOF
+{
+  "theme": "auto",
+  "mcpServers": {
+    "pg-azure": {
+      "command": "$COMMAND",
+      "args": $ARGS,
+      "env": $ENV_JSON
+    }
+  }
+}
+EOF
+    fi
+
+    print_success "Configured at $SETTINGS_FILE"
+
+    echo ""
+    echo -e "${GREEN}╔════════════════════════════════════════════════╗${NC}"
+    echo -e "${GREEN}║${NC} Setup Complete! ✓                            ${GREEN}║${NC}"
+    echo -e "${GREEN}╚════════════════════════════════════════════════╝${NC}"
+    echo ""
+    echo "Next steps:"
+    echo "  1. Restart Claude Code or reload MCP with /mcp"
+    echo "  2. Test with: /mcp"
+    echo ""
+
+    if [ "$INSTALL_METHOD" = "2" ]; then
+        echo "First time setup:"
         echo "  npm install -g mcp-server-azure-postgres"
-        echo ""
-        print_info "Then register in Claude Code:"
-        echo ""
-        echo "  claude mcp add pg-azure --transport stdio -- mcp-server-azure-postgres"
         echo ""
     fi
 
     if [ "$AUTH_METHOD" = "1" ]; then
+        echo -e "${YELLOW}ℹ${NC}  Make sure you've run 'az login' before using the MCP"
         echo ""
-        print_info "Make sure you've run 'az login' before using the MCP"
     fi
 
-    echo ""
-    echo -e "${GREEN}✓${NC} Setup complete!"
-    echo ""
     echo "For more info: https://github.com/Ryzeon/mcp-server-azure-postgres"
 }
 

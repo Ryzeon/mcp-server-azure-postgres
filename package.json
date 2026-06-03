@@ -1,0 +1,35 @@
+{
+  "name": "mcp-server-azure-postgres",
+  "version": "0.1.0",
+  "description": "MCP server for Azure Database for PostgreSQL with automatic Azure AD token refresh",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "mcp-server-azure-postgres": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc --watch"
+  },
+  "keywords": [
+    "mcp",
+    "postgres",
+    "azure",
+    "ad",
+    "token",
+    "authentication"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@azure/identity": "^4.13.1",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "pg": "^8.21.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/pg": "^8",
+    "typescript": "^5"
+  }
+}

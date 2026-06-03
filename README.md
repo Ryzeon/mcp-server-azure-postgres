@@ -23,6 +23,8 @@ A Model Context Protocol (MCP) server for Azure Database for PostgreSQL with **a
 
 ### Quick Start (2 minutes)
 
+Run the setup helper to generate your configuration:
+
 **Linux / macOS:**
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Ryzeon/mcp-server-azure-postgres/main/install.sh | bash
@@ -33,17 +35,23 @@ curl -fsSL https://raw.githubusercontent.com/Ryzeon/mcp-server-azure-postgres/ma
 iex (irm https://raw.githubusercontent.com/Ryzeon/mcp-server-azure-postgres/main/install.ps1)
 ```
 
-The installer:
-- ✓ Checks Node.js and npm
-- ✓ Asks for PostgreSQL connection details
-- ✓ Asks for Azure auth method (`az login` or Service Principal)
-- ✓ Chooses installation method (npx or npm install -g)
-- ✓ **Automatically edits `~/.claude/settings.json`**
-- ✓ Restart Claude Code — done!
+The helper will:
+- ✓ Check Node.js and npm
+- ✓ Ask for PostgreSQL connection details
+- ✓ Ask for Azure auth method (`az login` or Service Principal)
+- ✓ Choose installation method (npx or npm install -g)
+- ✓ **Generate the JSON configuration**
+- ✓ Show you the configuration to copy
 
-Everything is configured in one file. No manual exports needed.
+Then paste the generated JSON into your tool's settings file and restart.
 
-For manual setup or troubleshooting, see [INSTALL.md](INSTALL.md).
+**Works with:**
+- Claude Code (`~/.claude/settings.json`)
+- ChatGPT (via MCP marketplace)
+- Cline, Continue, and other MCP clients
+- Custom applications
+
+For detailed setup and troubleshooting, see [INSTALL.md](INSTALL.md).
 
 ## Configuration
 

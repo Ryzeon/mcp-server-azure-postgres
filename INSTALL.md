@@ -1,6 +1,6 @@
 # Installation Guide
 
-This guide covers installing `mcp-server-azure-postgres` on different platforms.
+This guide covers installing `mcp-server-azure-postgres` for any MCP client.
 
 ## Prerequisites
 
@@ -12,7 +12,9 @@ Before starting, make sure you have:
   - Or use `az login` to authenticate locally
 - **Claude Code** — [Download](https://www.claude.com/code)
 
-## Quick Install (Recommended)
+## Quick Start (Recommended)
+
+Use the setup helper to generate your configuration:
 
 ### Linux / macOS
 
@@ -28,15 +30,46 @@ Open PowerShell as Administrator, then:
 iex (irm https://raw.githubusercontent.com/Ryzeon/mcp-server-azure-postgres/main/install.ps1)
 ```
 
-The installer will:
+The helper will:
 1. ✅ Check your Node.js and npm versions
-2. ✅ Ask for your PostgreSQL connection details
+2. ✅ Ask for PostgreSQL connection details
 3. ✅ Ask your Azure auth method (`az login` or Service Principal)
-4. ✅ Ask which method you prefer (npx or npm install -g)
-5. ✅ **Edit your `~/.claude/settings.json`** with everything configured
-6. Done! Restart Claude Code with `/mcp`
+4. ✅ Ask which installation method you prefer (npx or npm install -g)
+5. ✅ Ask what to name this MCP configuration
+6. ✅ **Generate the JSON configuration to copy**
 
-All variables are stored in `~/.claude/settings.json` — no manual export needed.
+Then paste the generated JSON into your tool's configuration file and restart.
+
+## Where to Paste the Configuration
+
+After running the setup helper, paste the generated JSON into your tool's configuration file:
+
+| Tool | Settings File | Format |
+|------|---|---|
+| **Claude Code** | `~/.claude/settings.json` | JSON (inside `"mcpServers"`) |
+| **Cline** | `~/.cline/settings.json` | JSON (inside `"mcpServers"`) |
+| **Continue** | `~/.continue/config.json` | JSON (inside `"codeModels"`) |
+| **Custom Apps** | Your config file | JSON (your format) |
+
+**Example for Claude Code (`~/.claude/settings.json`):**
+```json
+{
+  "theme": "auto",
+  "mcpServers": {
+    "pg-azure": {
+      "command": "npx",
+      "args": ["-y", "github:Ryzeon/mcp-server-azure-postgres"],
+      "env": {
+        "PGHOST": "...",
+        "PGDATABASE": "...",
+        ...
+      }
+    }
+  }
+}
+```
+
+Then restart your application.
 
 ## Installation Methods
 

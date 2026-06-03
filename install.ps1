@@ -103,91 +103,78 @@ function Main {
     $InstallMethodInput = Read-Host "  Select [1-2] (default 1)"
     $InstallMethod = if ([string]::IsNullOrWhiteSpace($InstallMethodInput)) { "1" } else { $InstallMethodInput }
 
-    # Create/update .claude/settings.json
+    # Ask for MCP name
     Write-Host ""
-    Write-Step "Configuring Claude Code..."
+    Write-Step "MCP Configuration Name"
+    $MCPNameInput = Read-Host "  Name for this MCP (default pg-azure)"
+    $MCPName = if ([string]::IsNullOrWhiteSpace($MCPNameInput)) { "pg-azure" } else { $MCPNameInput }
 
-    $ClaudeDir = "$env:USERPROFILE\.claude"
-    if (-not (Test-Path $ClaudeDir)) {
-        New-Item -ItemType Directory -Path $ClaudeDir -Force | Out-Null
-    }
-
-    $SettingsFile = "$ClaudeDir\settings.json"
-
-    # Backup if exists
-    if (Test-Path $SettingsFile) {
-        $BackupFile = "$SettingsFile.backup.$(Get-Date -Format 'yyyyMMddHHmmss')"
-        Copy-Item $SettingsFile -Destination $BackupFile
-        Write-Success "Backed up existing settings"
-    }
-
-    # Load existing settings or create new
-    if (Test-Path $SettingsFile) {
-        $Settings = Get-Content $SettingsFile -Raw | ConvertFrom-Json
-    }
-    else {
-        $Settings = @{ theme = "auto" }
-    }
-
-    # Ensure mcpServers exists
-    if (-not $Settings.mcpServers) {
-        $Settings | Add-Member -Name "mcpServers" -Value @{} -MemberType NoteProperty
-    }
-
-    # Build env object
-    $Env = @{
-        PGHOST     = $PGHOST
-        PGDATABASE = $PGDATABASE
-        PGUSER     = $PGUSER
-        PGPORT     = $PGPORT
-    }
-
-    # Add Azure credentials if Service Principal
-    if ($AuthMethod -eq "2") {
-        $Env["AZURE_TENANT_ID"] = $AZURE_TENANT_ID
-        $Env["AZURE_CLIENT_ID"] = $AZURE_CLIENT_ID
-        $Env["AZURE_CLIENT_SECRET"] = $AZURE_CLIENT_SECRET
-    }
-
-    # Build MCP config
-    $McpConfig = @{
-        env = $Env
-    }
-
-    # Add command and args
-    if ($InstallMethod -eq "1") {
-        $McpConfig["command"] = "npx"
-        $McpConfig["args"] = @("-y", "github:Ryzeon/mcp-server-azure-postgres")
-    }
-    else {
-        $McpConfig["command"] = "mcp-server-azure-postgres"
-    }
-
-    # Add/update pg-azure MCP
-    $Settings.mcpServers | Add-Member -Name "pg-azure" -Value $McpConfig -MemberType NoteProperty -Force
-
-    # Write settings
-    $Settings | ConvertTo-Json -Depth 10 | Out-File -FilePath $SettingsFile -Encoding UTF8
-    Write-Success "Configured at $SettingsFile"
-
+    # Generate configuration
     Write-Host ""
     Write-Host "╔════════════════════════════════════════════════╗" -ForegroundColor Green
-    Write-Host "║ Setup Complete! ✓                            ║" -ForegroundColor Green
+    Write-Host "║ Configuration Generated ✓                   ║" -ForegroundColor Green
     Write-Host "╚════════════════════════════════════════════════╝" -ForegroundColor Green
     Write-Host ""
-    Write-Host "Next steps:" -ForegroundColor Cyan
-    Write-Host "  1. Restart Claude Code or reload MCP with /mcp"
-    Write-Host "  2. Test with: /mcp"
+
+    Write-Host "Add this to your settings file (inside ""mcpServers""):" -ForegroundColor Cyan
     Write-Host ""
 
+    # Build env object for display
+    $EnvLines = @(
+        '  "PGHOST": "' + $PGHOST + '",'
+        '  "PGDATABASE": "' + $PGDATABASE + '",'
+        '  "PGUSER": "' + $PGUSER + '",'
+        '  "PGPORT": "' + $PGPORT + '"'
+    )
+
+    if (-not [string]::IsNullOrWhiteSpace($AZURE_TENANT_ID)) {
+        $EnvLines += '  "AZURE_TENANT_ID": "' + $AZURE_TENANT_ID + '",'
+        $EnvLines += '  "AZURE_CLIENT_ID": "' + $AZURE_CLIENT_ID + '",'
+        $EnvLines[-1] = $EnvLines[-1] -replace ',$', ','
+        $EnvLines += '  "AZURE_CLIENT_SECRET": "' + $AZURE_CLIENT_SECRET + '"'
+    }
+
+    Write-Host ('"' + $MCPName + '": {') -ForegroundColor Blue
+
+    if ($InstallMethod -eq "1") {
+        Write-Host '  "command": "npx",'
+        Write-Host '  "args": ["-y", "github:Ryzeon/mcp-server-azure-postgres"],'
+    }
+    else {
+        Write-Host '  "command": "mcp-server-azure-postgres",'
+    }
+
+    Write-Host '  "env": {'
+    foreach ($line in $EnvLines) {
+        Write-Host $line
+    }
+    Write-Host '  }'
+    Write-Host ('}') -ForegroundColor Blue
+
+    Write-Host ""
+    Write-Host "Configuration details:" -ForegroundColor Cyan
+    Write-Host "  - MCP Name: $MCPName"
+    Write-Host "  - Command: $(if ($InstallMethod -eq '1') { 'npx' } else { 'mcp-server-azure-postgres' })"
     if ($InstallMethod -eq "2") {
-        Write-Host "First time setup:"
-        Write-Host "  npm install -g mcp-server-azure-postgres"
+        Write-Host "  - Install: npm install -g mcp-server-azure-postgres"
+    }
+    Write-Host "  - Auth: $(if ($AuthMethod -eq '1') { 'az login' } else { 'Service Principal' })"
+    Write-Host ""
+    Write-Host "Next steps:" -ForegroundColor Cyan
+    Write-Host "  1. Copy the configuration above"
+    Write-Host "  2. Open your settings file (Claude: ~/.claude/settings.json, etc.)"
+    Write-Host "  3. Find or create the ""mcpServers"" section"
+    Write-Host "  4. Paste the configuration"
+    Write-Host "  5. Restart your application"
+    Write-Host ""
+
+    if ($AuthMethod -eq "1") {
+        Write-Info "Reminder: Run 'az login' before using the MCP"
         Write-Host ""
     }
 
-    if ($AuthMethod -eq "1") {
-        Write-Info "Make sure you've run 'az login' before using the MCP"
+    if ($InstallMethod -eq "2") {
+        Write-Info "Install first: npm install -g mcp-server-azure-postgres"
         Write-Host ""
     }
 

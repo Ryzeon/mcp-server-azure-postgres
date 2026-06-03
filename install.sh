@@ -105,18 +105,18 @@ main() {
     read -p "  Select [1-2] (default 1): " INSTALL_METHOD
     INSTALL_METHOD=${INSTALL_METHOD:-1}
 
-    # Create/update .claude/settings.json
+    # Ask for MCP name
     echo ""
-    print_step "Configuring Claude Code..."
+    print_step "MCP Configuration Name"
+    read -p "  Name for this MCP (default pg-azure): " MCP_NAME
+    MCP_NAME=${MCP_NAME:-pg-azure}
 
-    mkdir -p "$HOME/.claude"
-    SETTINGS_FILE="$HOME/.claude/settings.json"
-
-    # Backup if exists
-    if [ -f "$SETTINGS_FILE" ]; then
-        cp "$SETTINGS_FILE" "$SETTINGS_FILE.backup.$(date +%s)"
-        print_success "Backed up existing settings"
-    fi
+    # Generate configuration
+    echo ""
+    echo -e "${GREEN}╔════════════════════════════════════════════════╗${NC}"
+    echo -e "${GREEN}║${NC} Configuration Generated ✓                   ${GREEN}║${NC}"
+    echo -e "${GREEN}╚════════════════════════════════════════════════╝${NC}"
+    echo ""
 
     # Determine command based on method
     if [ "$INSTALL_METHOD" = "1" ]; then
@@ -127,79 +127,59 @@ main() {
         ARGS="null"
     fi
 
-    # Build Python script to merge JSON
-    python3 << PYTHON_EOF
-import json
-import os
+    # Build env JSON string
+    ENV_START='{"PGHOST": "'$PGHOST'", "PGDATABASE": "'$PGDATABASE'", "PGUSER": "'$PGUSER'", "PGPORT": "'$PGPORT'"'
 
-settings_file = "$SETTINGS_FILE"
-command = "$COMMAND"
-args = $ARGS
+    if [ -n "$AZURE_TENANT_ID" ]; then
+        ENV_FULL="$ENV_START, \"AZURE_TENANT_ID\": \"$AZURE_TENANT_ID\", \"AZURE_CLIENT_ID\": \"$AZURE_CLIENT_ID\", \"AZURE_CLIENT_SECRET\": \"$AZURE_CLIENT_SECRET\"}"
+    else
+        ENV_FULL="$ENV_START}"
+    fi
 
-# Build env object
-env = {
-    "PGHOST": "$PGHOST",
-    "PGDATABASE": "$PGDATABASE",
-    "PGUSER": "$PGUSER",
-    "PGPORT": "$PGPORT"
-}
-
-# Add Azure credentials if provided
-if "$AZURE_TENANT_ID":
-    env["AZURE_TENANT_ID"] = "$AZURE_TENANT_ID"
-    env["AZURE_CLIENT_ID"] = "$AZURE_CLIENT_ID"
-    env["AZURE_CLIENT_SECRET"] = "$AZURE_CLIENT_SECRET"
-
-# Build MCP config
-mcp_config = {
-    "command": command,
-    "env": env
-}
-
-if args is not None:
-    mcp_config["args"] = args
-
-# Load existing settings or create new
-if os.path.exists(settings_file):
-    with open(settings_file, 'r') as f:
-        settings = json.load(f)
-else:
-    settings = {"theme": "auto"}
-
-# Ensure mcpServers exists
-if "mcpServers" not in settings:
-    settings["mcpServers"] = {}
-
-# Add/update pg-azure
-settings["mcpServers"]["pg-azure"] = mcp_config
-
-# Write back
-with open(settings_file, 'w') as f:
-    json.dump(settings, f, indent=2)
-
-print("✓ Updated at " + settings_file)
-PYTHON_EOF
-
-    print_success "Settings configured"
-
+    # Output the configuration
+    echo "Add this to your settings file (inside \"mcpServers\"):"
     echo ""
-    echo -e "${GREEN}╔════════════════════════════════════════════════╗${NC}"
-    echo -e "${GREEN}║${NC} Setup Complete! ✓                            ${GREEN}║${NC}"
-    echo -e "${GREEN}╚════════════════════════════════════════════════╝${NC}"
+    echo -e "${BLUE}\"$MCP_NAME\": {${NC}"
+
+    if [ "$ARGS" = "null" ]; then
+        cat << EOF
+  "command": "$COMMAND",
+  "env": $ENV_FULL
+EOF
+    else
+        cat << EOF
+  "command": "$COMMAND",
+  "args": $ARGS,
+  "env": $ENV_FULL
+EOF
+    fi
+
+    echo -e "${BLUE}}${NC}"
+    echo ""
+
+    echo "Configuration details:"
+    echo "  - MCP Name: $MCP_NAME"
+    echo "  - Command: $COMMAND"
+    if [ "$INSTALL_METHOD" = "2" ]; then
+        echo "  - Install: npm install -g mcp-server-azure-postgres"
+    fi
+    echo "  - Auth: $([ "$AUTH_METHOD" = "1" ] && echo "az login" || echo "Service Principal")"
     echo ""
     echo "Next steps:"
-    echo "  1. Restart Claude Code or reload MCP with /mcp"
-    echo "  2. Test with: /mcp"
+    echo "  1. Copy the configuration above"
+    echo "  2. Open your settings file (Claude: ~/.claude/settings.json, etc.)"
+    echo "  3. Find or create the \"mcpServers\" section"
+    echo "  4. Paste the configuration"
+    echo "  5. Restart your application"
     echo ""
 
-    if [ "$INSTALL_METHOD" = "2" ]; then
-        echo "First time setup:"
-        echo "  npm install -g mcp-server-azure-postgres"
+    if [ "$AUTH_METHOD" = "1" ]; then
+        echo -e "${YELLOW}ℹ${NC}  Reminder: Run 'az login' before using the MCP"
         echo ""
     fi
 
-    if [ "$AUTH_METHOD" = "1" ]; then
-        echo -e "${YELLOW}ℹ${NC}  Make sure you've run 'az login' before using the MCP"
+    if [ "$INSTALL_METHOD" = "2" ]; then
+        echo -e "${YELLOW}ℹ${NC}  Install first: npm install -g mcp-server-azure-postgres"
         echo ""
     fi
 

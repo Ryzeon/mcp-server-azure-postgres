@@ -1,22 +1,10 @@
-# mcp-server-azure-postgres Installation Script for PowerShell
-# For Windows: Run as Administrator
+# mcp-server-azure-postgres Setup Script for PowerShell
 # Usage: powershell -NoProfile -ExecutionPolicy Bypass -File install.ps1
-
-param()
-
-# Colors & Formatting
-$Colors = @{
-    Reset   = "`e[0m"
-    Red     = "`e[31m"
-    Green   = "`e[32m"
-    Blue    = "`e[34m"
-    Yellow  = "`e[33m"
-}
 
 function Write-Header {
     Write-Host ""
     Write-Host "╔════════════════════════════════════════════════╗" -ForegroundColor Blue
-    Write-Host "║ mcp-server-azure-postgres Installation        ║" -ForegroundColor Blue
+    Write-Host "║ mcp-server-azure-postgres Setup               ║" -ForegroundColor Blue
     Write-Host "╚════════════════════════════════════════════════╝" -ForegroundColor Blue
     Write-Host ""
 }
@@ -36,9 +24,9 @@ function Write-Error-Custom {
     Write-Host "✗ $Message" -ForegroundColor Red
 }
 
-function Write-Warning-Custom {
+function Write-Info {
     param([string]$Message)
-    Write-Host "⚠ $Message" -ForegroundColor Yellow
+    Write-Host "ℹ  $Message" -ForegroundColor Yellow
 }
 
 function Test-CommandExists {
@@ -73,26 +61,6 @@ function Main {
         exit 1
     }
 
-    # Check Azure CLI
-    Write-Step "Checking Azure CLI..."
-    if (Test-CommandExists "az") {
-        Write-Success "Azure CLI found"
-    }
-    else {
-        Write-Warning-Custom "Azure CLI not found - you'll need it for 'az login' auth"
-        Write-Host "Install from: https://learn.microsoft.com/en-us/cli/azure/install-azure-cli" -ForegroundColor Cyan
-    }
-
-    # Check Claude Code
-    Write-Step "Checking Claude Code..."
-    $SettingsPath = "$env:USERPROFILE\.claude\settings.json"
-    if (Test-Path $SettingsPath) {
-        Write-Success "Claude Code settings found"
-    }
-    else {
-        Write-Warning-Custom "Claude Code settings not found yet (will be created)"
-    }
-
     # Get PostgreSQL connection info
     Write-Host ""
     Write-Step "PostgreSQL Configuration"
@@ -108,8 +76,7 @@ function Main {
     # Get authentication method
     Write-Host ""
     Write-Step "Azure Authentication Method"
-    Write-Host "How do you want to authenticate with Azure?" -ForegroundColor Cyan
-    Write-Host "  1) az login (login locally)"
+    Write-Host "  1) az login (recommended - login locally with 'az login')" -ForegroundColor Cyan
     Write-Host "  2) Service Principal (provide credentials)"
     Write-Host ""
     $AuthMethodInput = Read-Host "  Select [1-2] (default 1)"
@@ -127,72 +94,63 @@ function Main {
         $AZURE_CLIENT_SECRET = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($AZURE_CLIENT_SECRET))
     }
 
-    # Create settings
+    # Choose installation method
     Write-Host ""
-    Write-Step "Configuring Claude Code..."
+    Write-Step "Installation Method"
+    Write-Host "  1) npx (recommended - always latest, no setup)" -ForegroundColor Cyan
+    Write-Host "  2) npm install -g (install globally, faster)"
+    Write-Host ""
+    $InstallMethodInput = Read-Host "  Select [1-2] (default 1)"
+    $InstallMethod = if ([string]::IsNullOrWhiteSpace($InstallMethodInput)) { "1" } else { $InstallMethodInput }
 
-    $ClaudeDir = "$env:USERPROFILE\.claude"
-    if (-not (Test-Path $ClaudeDir)) {
-        New-Item -ItemType Directory -Path $ClaudeDir -Force | Out-Null
+    # Show environment variables
+    Write-Host ""
+    Write-Host "Set these environment variables:" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "`$env:PGHOST = '$PGHOST'"
+    Write-Host "`$env:PGDATABASE = '$PGDATABASE'"
+    Write-Host "`$env:PGUSER = '$PGUSER'"
+    Write-Host "`$env:PGPORT = '$PGPORT'"
+
+    if (-not [string]::IsNullOrWhiteSpace($AZURE_TENANT_ID)) {
+        Write-Host "`$env:AZURE_TENANT_ID = '$AZURE_TENANT_ID'"
+        Write-Host "`$env:AZURE_CLIENT_ID = '$AZURE_CLIENT_ID'"
+        Write-Host "`$env:AZURE_CLIENT_SECRET = '***'"
     }
 
-    $SettingsFile = "$ClaudeDir\settings.json"
+    Write-Host ""
+    Write-Success "Configuration ready"
+    Write-Host ""
 
-    # Backup existing
-    if (Test-Path $SettingsFile) {
-        $BackupFile = "$SettingsFile.backup.$(Get-Date -Format 'yyyyMMddHHmmss')"
-        Copy-Item $SettingsFile -Destination $BackupFile
-        Write-Success "Backed up existing settings to $BackupFile"
+    # Show next steps
+    Write-Host "Next, install the MCP server:" -ForegroundColor Cyan
+    Write-Host ""
+
+    if ($InstallMethod -eq "1") {
+        Write-Host "  # No installation needed - use with claude mcp add:"
+        Write-Host ""
+        Write-Info "Register in Claude Code:"
+        Write-Host ""
+        Write-Host "  claude mcp add pg-azure --transport stdio -- npx -y github:Ryzeon/mcp-server-azure-postgres"
+        Write-Host ""
     }
-
-    # Create settings object
-    $Settings = @{
-        theme      = "auto"
-        mcpServers = @{
-            "pg-azure" = @{
-                command = "npx"
-                args    = @("-y", "github:Ryzeon/mcp-server-azure-postgres")
-                env     = @{
-                    PGHOST     = $PGHOST
-                    PGDATABASE = $PGDATABASE
-                    PGUSER     = $PGUSER
-                    PGPORT     = $PGPORT
-                }
-            }
-        }
-    }
-
-    # Add Azure credentials if Service Principal
-    if ($AuthMethod -eq "2") {
-        $Settings.mcpServers["pg-azure"].env["AZURE_TENANT_ID"] = $AZURE_TENANT_ID
-        $Settings.mcpServers["pg-azure"].env["AZURE_CLIENT_ID"] = $AZURE_CLIENT_ID
-        $Settings.mcpServers["pg-azure"].env["AZURE_CLIENT_SECRET"] = $AZURE_CLIENT_SECRET
-    }
-
-    # Write settings
-    $Settings | ConvertTo-Json -Depth 10 | Out-File -FilePath $SettingsFile -Encoding UTF8
-    Write-Success "Claude Code configured at $SettingsFile"
-
-    # Final instructions
-    Write-Host ""
-    Write-Host "╔════════════════════════════════════════════════╗" -ForegroundColor Green
-    Write-Host "║ Installation Complete! ✓                    ║" -ForegroundColor Green
-    Write-Host "╚════════════════════════════════════════════════╝" -ForegroundColor Green
-    Write-Host ""
-
-    Write-Success "MCP server configured and ready to use"
-    Write-Host ""
-    Write-Host "Next steps:" -ForegroundColor Cyan
-    Write-Host "  1. Restart Claude Code or reload MCP with /mcp"
-    Write-Host "  2. Test with: /mcp"
-    Write-Host "  3. Use tools: query, list_schemas, list_tables, describe_table"
-    Write-Host ""
-
-    if ($AuthMethod -eq "1") {
-        Write-Host "ℹ Make sure you've run 'az login' before using the MCP server" -ForegroundColor Yellow
+    else {
+        Write-Host "  npm install -g mcp-server-azure-postgres"
+        Write-Host ""
+        Write-Info "Then register in Claude Code:"
+        Write-Host ""
+        Write-Host "  claude mcp add pg-azure --transport stdio -- mcp-server-azure-postgres"
         Write-Host ""
     }
 
+    if ($AuthMethod -eq "1") {
+        Write-Host ""
+        Write-Info "Make sure you've run 'az login' before using the MCP"
+    }
+
+    Write-Host ""
+    Write-Success "Setup complete!"
+    Write-Host ""
     Write-Host "For more info: https://github.com/Ryzeon/mcp-server-azure-postgres" -ForegroundColor Cyan
 }
 

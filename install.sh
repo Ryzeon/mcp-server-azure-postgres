@@ -10,7 +10,7 @@ NC='\033[0m' # No Color
 # Functions
 print_header() {
     echo -e "\n${BLUE}╔════════════════════════════════════════════════╗${NC}"
-    echo -e "${BLUE}║${NC} mcp-server-azure-postgres Installation        ${BLUE}║${NC}"
+    echo -e "${BLUE}║${NC} mcp-server-azure-postgres Setup               ${BLUE}║${NC}"
     echo -e "${BLUE}╚════════════════════════════════════════════════╝${NC}\n"
 }
 
@@ -26,8 +26,8 @@ print_error() {
     echo -e "${RED}✗${NC} $1"
 }
 
-print_warning() {
-    echo -e "${YELLOW}⚠${NC} $1"
+print_info() {
+    echo -e "${YELLOW}ℹ${NC}  $1"
 }
 
 check_command() {
@@ -38,7 +38,7 @@ check_command() {
     fi
 }
 
-# Main installation
+# Main
 main() {
     print_header
 
@@ -49,7 +49,7 @@ main() {
         print_success "Node.js $NODE_VERSION found"
     else
         print_error "Node.js is not installed"
-        echo -e "Please install Node.js (v20+) from https://nodejs.org/"
+        echo "Please install Node.js (v20+) from https://nodejs.org/"
         exit 1
     fi
 
@@ -61,24 +61,6 @@ main() {
     else
         print_error "npm is not installed"
         exit 1
-    fi
-
-    # Check Azure CLI
-    print_step "Checking Azure CLI..."
-    if check_command "az"; then
-        AZ_VERSION=$(az version --output json 2>/dev/null | grep -o '"azure-cli": "[^"]*' | cut -d'"' -f4)
-        print_success "Azure CLI $AZ_VERSION found"
-    else
-        print_warning "Azure CLI not found - you'll need it for 'az login' auth"
-        echo -e "Install from: https://learn.microsoft.com/en-us/cli/azure/install-azure-cli"
-    fi
-
-    # Check Claude Code
-    print_step "Checking Claude Code..."
-    if [ -f "$HOME/.claude/settings.json" ]; then
-        print_success "Claude Code settings found"
-    else
-        print_warning "Claude Code settings not found yet (will be created)"
     fi
 
     # Get PostgreSQL connection info
@@ -96,8 +78,7 @@ main() {
     # Get authentication method
     echo ""
     print_step "Azure Authentication Method"
-    echo "How do you want to authenticate with Azure?"
-    echo "  1) az login (login locally)"
+    echo "  1) az login (recommended - login locally with 'az login')"
     echo "  2) Service Principal (provide credentials)"
     echo ""
     read -p "  Select [1-2] (default 1): " AUTH_METHOD
@@ -115,73 +96,62 @@ main() {
         echo ""
     fi
 
-    # Create settings
+    # Choose installation method
     echo ""
-    print_step "Configuring Claude Code..."
+    print_step "Installation Method"
+    echo "  1) npx (recommended - always latest, no setup)"
+    echo "  2) npm install -g (install globally, faster)"
+    echo ""
+    read -p "  Select [1-2] (default 1): " INSTALL_METHOD
+    INSTALL_METHOD=${INSTALL_METHOD:-1}
 
-    mkdir -p "$HOME/.claude"
-
-    # Read existing settings or create new
-    SETTINGS_FILE="$HOME/.claude/settings.json"
-    if [ -f "$SETTINGS_FILE" ]; then
-        # Backup existing
-        cp "$SETTINGS_FILE" "$SETTINGS_FILE.backup.$(date +%s)"
-        print_success "Backed up existing settings to $SETTINGS_FILE.backup.*"
-    fi
-
-    # Create settings JSON
-    cat > "$SETTINGS_FILE" <<EOF
-{
-  "theme": "auto",
-  "mcpServers": {
-    "pg-azure": {
-      "command": "npx",
-      "args": ["-y", "github:Ryzeon/mcp-server-azure-postgres"],
-      "env": {
-        "PGHOST": "$PGHOST",
-        "PGDATABASE": "$PGDATABASE",
-        "PGUSER": "$PGUSER",
-        "PGPORT": "$PGPORT"
-EOF
+    # Generate environment variables export
+    echo ""
+    echo "Set these environment variables:"
+    echo ""
+    echo "export PGHOST='$PGHOST'"
+    echo "export PGDATABASE='$PGDATABASE'"
+    echo "export PGUSER='$PGUSER'"
+    echo "export PGPORT='$PGPORT'"
 
     if [ -n "$AZURE_TENANT_ID" ]; then
-        cat >> "$SETTINGS_FILE" <<EOF
-,
-        "AZURE_TENANT_ID": "$AZURE_TENANT_ID",
-        "AZURE_CLIENT_ID": "$AZURE_CLIENT_ID",
-        "AZURE_CLIENT_SECRET": "$AZURE_CLIENT_SECRET"
-EOF
+        echo "export AZURE_TENANT_ID='$AZURE_TENANT_ID'"
+        echo "export AZURE_CLIENT_ID='$AZURE_CLIENT_ID'"
+        echo "export AZURE_CLIENT_SECRET='$AZURE_CLIENT_SECRET'"
     fi
 
-    cat >> "$SETTINGS_FILE" <<EOF
-      }
-    }
-  }
-}
-EOF
-
-    print_success "Claude Code configured at $SETTINGS_FILE"
-
-    # Final instructions
     echo ""
-    echo -e "${GREEN}╔════════════════════════════════════════════════╗${NC}"
-    echo -e "${GREEN}║${NC} Installation Complete! ✓                    ${GREEN}║${NC}"
-    echo -e "${GREEN}╚════════════════════════════════════════════════╝${NC}"
+    print_success "Configuration ready"
     echo ""
 
-    print_success "MCP server configured and ready to use"
-    echo ""
-    echo "Next steps:"
-    echo "  1. Restart Claude Code or reload MCP with /mcp"
-    echo "  2. Test with: /mcp"
-    echo "  3. Use tools: query, list_schemas, list_tables, describe_table"
+    # Show installation method
+    echo "Next, install the MCP server:"
     echo ""
 
-    if [ "$AUTH_METHOD" = "1" ]; then
-        echo -e "${YELLOW}ℹ${NC}  Make sure you've run 'az login' before using the MCP server"
+    if [ "$INSTALL_METHOD" = "1" ]; then
+        echo "  # No installation needed - use with claude mcp add:"
+        echo ""
+        print_info "Register in Claude Code:"
+        echo ""
+        echo "  claude mcp add pg-azure --transport stdio -- npx -y github:Ryzeon/mcp-server-azure-postgres"
+        echo ""
+    else
+        echo "  npm install -g mcp-server-azure-postgres"
+        echo ""
+        print_info "Then register in Claude Code:"
+        echo ""
+        echo "  claude mcp add pg-azure --transport stdio -- mcp-server-azure-postgres"
         echo ""
     fi
 
+    if [ "$AUTH_METHOD" = "1" ]; then
+        echo ""
+        print_info "Make sure you've run 'az login' before using the MCP"
+    fi
+
+    echo ""
+    echo -e "${GREEN}✓${NC} Setup complete!"
+    echo ""
     echo "For more info: https://github.com/Ryzeon/mcp-server-azure-postgres"
 }
 

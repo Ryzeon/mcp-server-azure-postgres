@@ -21,7 +21,7 @@ A Model Context Protocol (MCP) server for Azure Database for PostgreSQL with **a
 
 ## Installation
 
-### Quick Start (5 minutes)
+### Quick Start (2 minutes)
 
 **Linux / macOS:**
 ```bash
@@ -33,31 +33,17 @@ curl -fsSL https://raw.githubusercontent.com/Ryzeon/mcp-server-azure-postgres/ma
 iex (irm https://raw.githubusercontent.com/Ryzeon/mcp-server-azure-postgres/main/install.ps1)
 ```
 
-The installer will:
-- ✓ Check your Node.js and npm setup
-- ✓ Ask for PostgreSQL connection details
-- ✓ Ask for Azure auth method (`az login` or Service Principal)
-- ✓ Show you the `claude mcp add` command to register the MCP
+The installer:
+- ✓ Checks Node.js and npm
+- ✓ Asks for PostgreSQL connection details
+- ✓ Asks for Azure auth method (`az login` or Service Principal)
+- ✓ Chooses installation method (npx or npm install -g)
+- ✓ **Automatically edits `~/.claude/settings.json`**
+- ✓ Restart Claude Code — done!
 
-### Manual Setup
+Everything is configured in one file. No manual exports needed.
 
-```bash
-# Set environment variables
-export PGHOST="myserver.postgres.database.azure.com"
-export PGDATABASE="mydb"
-export PGUSER="myapp"
-export PGPORT="5432"
-
-# Then one of:
-# Option A: npx (no installation)
-claude mcp add pg-azure --transport stdio -- npx -y github:Ryzeon/mcp-server-azure-postgres
-
-# Option B: npm install -g (faster execution)
-npm install -g mcp-server-azure-postgres
-claude mcp add pg-azure --transport stdio -- mcp-server-azure-postgres
-```
-
-For detailed setup and troubleshooting, see [INSTALL.md](INSTALL.md).
+For manual setup or troubleshooting, see [INSTALL.md](INSTALL.md).
 
 ## Configuration
 

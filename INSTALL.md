@@ -30,21 +30,13 @@ iex (irm https://raw.githubusercontent.com/Ryzeon/mcp-server-azure-postgres/main
 
 The installer will:
 1. ✅ Check your Node.js and npm versions
-2. ✅ Check for Azure CLI
-3. ✅ Ask for your PostgreSQL connection details:
-   - `PGHOST` (e.g., `myserver.postgres.database.azure.com`)
-   - `PGDATABASE` (e.g., `mydb`)
-   - `PGUSER` (e.g., `myapp`)
-   - `PGPORT` (default: `5432`)
-4. ✅ Ask how you want to authenticate:
-   - **Option 1: `az login`** — Works if you've already logged into Azure locally
-   - **Option 2: Service Principal** — For CI/CD or another machine
-5. ✅ Ask which installation method you prefer:
-   - **npx** (default) — Always latest, no installation needed
-   - **npm install -g** — Install globally, faster after first run
-   - **Docker** — Completely isolated, no Node.js required
-   - **Clone & run local** — Full control, development mode
-6. ✅ Configure your `~/.claude/settings.json` automatically
+2. ✅ Ask for your PostgreSQL connection details
+3. ✅ Ask your Azure auth method (`az login` or Service Principal)
+4. ✅ Ask which method you prefer (npx or npm install -g)
+5. ✅ **Edit your `~/.claude/settings.json`** with everything configured
+6. Done! Restart Claude Code with `/mcp`
+
+All variables are stored in `~/.claude/settings.json` — no manual export needed.
 
 ## Installation Methods
 
@@ -88,45 +80,68 @@ claude mcp add pg-azure --transport stdio -- mcp-server-azure-postgres
 
 ## Manual Setup
 
-If the installer doesn't work for you, here's how to set it up manually:
+If the installer doesn't work for you, edit `~/.claude/settings.json` directly:
 
-### 1. Set Environment Variables
+### With `az login` (recommended)
 
-Export these in your shell:
-
-```bash
-export PGHOST="myserver.postgres.database.azure.com"
-export PGDATABASE="mydb"
-export PGUSER="myapp"
-export PGPORT="5432"
-
-# If using Service Principal (optional):
-export AZURE_TENANT_ID="..."
-export AZURE_CLIENT_ID="..."
-export AZURE_CLIENT_SECRET="..."
+```json
+{
+  "theme": "auto",
+  "mcpServers": {
+    "pg-azure": {
+      "command": "npx",
+      "args": ["-y", "github:Ryzeon/mcp-server-azure-postgres"],
+      "env": {
+        "PGHOST": "myserver.postgres.database.azure.com",
+        "PGDATABASE": "mydb",
+        "PGUSER": "myapp",
+        "PGPORT": "5432"
+      }
+    }
+  }
+}
 ```
 
-### 2. Choose Your Installation Method
-
-**Option A: npx (no installation needed)**
-```bash
-claude mcp add pg-azure --transport stdio -- npx -y github:Ryzeon/mcp-server-azure-postgres
+Or with `npm install -g`:
+```json
+{
+  "mcpServers": {
+    "pg-azure": {
+      "command": "mcp-server-azure-postgres",
+      "env": {
+        "PGHOST": "myserver.postgres.database.azure.com",
+        "PGDATABASE": "mydb",
+        "PGUSER": "myapp",
+        "PGPORT": "5432"
+      }
+    }
+  }
+}
 ```
 
-**Option B: npm install -g**
-```bash
-npm install -g mcp-server-azure-postgres
-claude mcp add pg-azure --transport stdio -- mcp-server-azure-postgres
+### With Service Principal
+
+```json
+{
+  "mcpServers": {
+    "pg-azure": {
+      "command": "npx",
+      "args": ["-y", "github:Ryzeon/mcp-server-azure-postgres"],
+      "env": {
+        "PGHOST": "myserver.postgres.database.azure.com",
+        "PGDATABASE": "mydb",
+        "PGUSER": "myapp",
+        "PGPORT": "5432",
+        "AZURE_TENANT_ID": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+        "AZURE_CLIENT_ID": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+        "AZURE_CLIENT_SECRET": "your-secret-value"
+      }
+    }
+  }
+}
 ```
 
-### 3. Verify
-
-In Claude Code, run:
-```
-/mcp
-```
-
-You should see `pg-azure` in the MCP servers list.
+Then restart Claude Code or use `/mcp` to reload.
 
 ## Getting Azure Service Principal Credentials
 

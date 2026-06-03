@@ -9,10 +9,17 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { query, close } from "./db.js";
 
-const server = new Server({
-  name: "mcp-server-azure-postgres",
-  version: "0.1.0",
-});
+const server = new Server(
+  {
+    name: "mcp-server-azure-postgres",
+    version: "0.1.0",
+  },
+  {
+    capabilities: {
+      tools: {},
+    },
+  }
+);
 
 const tools: Tool[] = [
   {
